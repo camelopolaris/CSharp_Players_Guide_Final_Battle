@@ -91,7 +91,7 @@ namespace FinalBattle
                 int damageValue = random.Next(2);
                 target.TakeDamage(damageValue);
 
-                return damageValue;
+                return new StandardAttack.AttackData(damageValue);
 
                
                 
@@ -100,7 +100,7 @@ namespace FinalBattle
             ));
         }
 
-        [Obsolete("StandardAttack instances are initialized with a lambda expression where the lambda is of type Action<BattleRound, Character>")]
+        [Obsolete("StandardAttack instances are initialized with a lambda expression where the lambda is of type Func<BattleRound, Character, int>")]
         
         public void BoneCrunch(BattleRound battle, IGameAction actionType, Character target) 
         {
@@ -320,11 +320,11 @@ namespace FinalBattle
     public class StandardAttack : IGameAction 
     {
 
-        private readonly Func<BattleRound, Character, int> _attack;
+        private readonly Func<BattleRound, Character, AttackData> _attack;
         public string Name { get; init; }
 
         
-        public StandardAttack(string name, Func<BattleRound, Character, int> attackBehavior)
+        public StandardAttack(string name, Func<BattleRound, Character, AttackData> attackBehavior)
         {
             Name = name;
 
@@ -351,24 +351,26 @@ namespace FinalBattle
              * This still allows the possibility of getting the true damage value since it is possible to obtain damage values after resistances while invoking _attack.
              * For example, a Character class may override TakeDamage so that it takes 50% damage rounded up. Since TakeDamage is accessible within an _attack, that value can be reported here.
              * 
+             * 11/11: Another possible solution is to return an AttackData instance with all data. Potential issues with this approach is that future AttackData instances may have historic data (e.g. hit frequencies).
+             * 
              * TODO: If necessary, go back to using the HP difference (where calculation is priorHP - HP) to get true damage value. Caveat is that attacks that have large damage values will only show
              * the amount of damage leading up to zero HP.
              */
          
 
-            int damageTaken = _attack.Invoke(battle, target);
+            AttackData attackData = _attack.Invoke(battle, target);
 
+            //TODO: Potentially move TakeDamage invocation from the attackBehavior delegate type to here. It may not matter either way since an instance of the target Character is accessible both here and in the delegate in StandardAttack.
 
             ConsoleOutput.OutputAttack(character, this, target);
-            ConsoleOutput.OutputAttackDamageOutcome(attack: this, target: target, damage: damageTaken);
+            ConsoleOutput.OutputAttackDamageOutcome(attack: this, target: target, damage: attackData.damageValue);
         }
 
         [type: Obsolete("_attack in the StandardAttack class represents a suppliable Action<BattleRound, Character> type.")]
         private delegate void AttackDelegate(BattleRound battle, Character target);
 
 
-        [Obsolete]
-        //TODO: TEMPORARY UNLESS USEFUL ENOUGH
+       
         public record AttackData(int damageValue);
         
 
