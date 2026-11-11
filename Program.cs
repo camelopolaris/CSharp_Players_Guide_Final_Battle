@@ -8,6 +8,7 @@ heroes.Add(new Skeleton());
 heroes.Add(new TrueProgrammer());
 
 List<Character> monsters = new List<Character>();
+
 monsters.Add(new Skeleton());
 
 Game testGame = new Game(heroes, monsters, new HumanPlayer(), new ComputerPlayer());
@@ -185,7 +186,8 @@ namespace FinalBattle
 
             BattleRound firstBattle = new BattleRound(this);
             firstBattle.BeginRound();
-            
+
+            ConsoleOutput.OutputGameOutcome(HeroesSide, MonstersSide);
         }
 
     }
@@ -255,16 +257,14 @@ namespace FinalBattle
              
                 }
 
-                
 
 
                 ToggleSideTurn(CurrentPartyTurn);
+                
 
 
             }
 
-            //TODO: TEMPORARY CW
-            Console.WriteLine($"{(!_currentParty.CheckIsAlive() ? _currentParty.Side : GetOpposingSide().Side)}'s party has been defeated");
         }
 
         //Switches the party that has its turn. Used at the end of each party turn cycle.
@@ -362,8 +362,18 @@ namespace FinalBattle
 
             //TODO: Potentially move TakeDamage invocation from the attackBehavior delegate type to here. It may not matter either way since an instance of the target Character is accessible both here and in the delegate in StandardAttack.
 
+
+            
+
             ConsoleOutput.OutputAttack(character, this, target);
             ConsoleOutput.OutputAttackDamageOutcome(attack: this, target: target, damage: attackData.damageValue);
+
+
+            //It is legal to remove the opposing side's party member when they die since the party executing the attack is the only one being iterated through at this point.
+            //Caveat is that any other scenario would require a different approach (e.g. if a Character has an attack that hurts themselves too)
+
+            if (!target.IsAlive) battle.GetOpposingSide().Members.Remove(target);
+            ConsoleOutput.OutputCharacterDeath(target);
         }
 
         [type: Obsolete("_attack in the StandardAttack class represents a suppliable Action<BattleRound, Character> type.")]

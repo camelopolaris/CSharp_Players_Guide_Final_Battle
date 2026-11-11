@@ -2,7 +2,7 @@
 {
     public static class ConsoleOutput 
     {
-        #region TURN RELATED
+        #region TURN / GAME LOGIC RELATED
         public static void OutputWhoseTurn(Character character) 
         {
             Console.WriteLine($"It is {character.Name}'s turn...\n");
@@ -29,6 +29,14 @@
             }
         }
 
+        public static void OutputGameOutcome(Party heroes, Party monsters) 
+        {
+            if (heroes.Side != PartySide.Heroes) throw new ArgumentException($"Parameter \"heroes\" Side property was not of expected type {PartySide.Heroes}");
+            if (monsters.Side != PartySide.Monsters) throw new ArgumentException($"Parameter \"monsters\" Side property was not of expected type {PartySide.Monsters}");
+
+            if(heroes.CheckIsAlive() && !monsters.CheckIsAlive()) Console.WriteLine("The heroes have won!");
+            else if (monsters.CheckIsAlive() && !heroes.CheckIsAlive()) Console.WriteLine("The Uncoded One's forces have prevailed...");
+        }
         #endregion
 
         #region ATTACK TURNS
@@ -47,6 +55,10 @@
             Console.WriteLine($"{target.Name} is now at {target.HP}/{target.MaxHP}.");
         }
 
+        public static void OutputCharacterDeath(Character character) 
+        {
+            Console.WriteLine($"{character.Name} has been defeated!");
+        }
 
        
         #endregion
