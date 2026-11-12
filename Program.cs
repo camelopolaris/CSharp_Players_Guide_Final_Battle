@@ -1,6 +1,7 @@
 ﻿
 using FinalBattle;
 using System.Runtime.CompilerServices;
+using System.Xml.Linq;
 
 
 List<Character> heroes = new List<Character>();
@@ -185,28 +186,67 @@ namespace FinalBattle
 
     public class Game
     {
+
+        private List<Party> _monstersQueue = new List<Party>();
+
+
         //TODO: Consider error handling for the PartySide of each side property. There must be one Heroes and one Monsters side, where no other combinations are possible.
         public Party HeroesSide { get; init; }
 
-        public Party MonstersSide { get; init; }
+        //Null until constructor runs; represents the initial monster party, then is reassigned with monster parties after the first BattleRound is succeeded by heroes. 
+        public Party? MonstersSide { get; private set; }
 
         //TODO: Consider altering Party instantiation depending on initialization logic upon starting a new game or battle round. The current implementation will likely work, though it could be necessary to have the constructor parameters be Party classes instead.
         //TODO: Ask for the type of player to instantiate each party with.
         public Game(List<Character> heroes, List<Character> monsters, Player player1, Player player2 ) 
         {
             HeroesSide = new Party(heroes, PartySide.Heroes, player1);
-            MonstersSide = new Party(monsters, PartySide.Monsters, player2);
+
+          
+            //TODO: 11/12
+            _monstersQueue.Add(new Party(monsters, PartySide.Monsters, player2));
+
+            _monstersQueue.Add(new Party(
+                new List<Character>() { 
+                    new Skeleton(),
+                    new Skeleton(),
+                }, 
+                PartySide.Monsters, 
+                player2));
         }
         public void Run()
         {
 
-            BattleRound firstBattle = new BattleRound(this);
-            firstBattle.BeginRound();
+            foreach (Party party in _monstersQueue) 
+            {
+                if (!IsGameOver())
+                {
+                    MonstersSide = party;
+                    BattleRound battle = new BattleRound(this);
+                    battle.BeginRound();
+                }
+                else break;
+            }
+
+          
+
+
+            //TODO: Add consecutive BattleRound battles here. They should only instantiate / invoke BeginRound when both parties are alive.
+            
 
             
 
             ConsoleOutput.OutputGameOutcome(HeroesSide, MonstersSide);
         }
+
+
+        //Game over state is different from BattleRound over state; game is over if EITHER the hero party is defeated ONCE or if ALL consecutive monster parties are defeated
+        //TODO: 11/12 Potentially remove second condition since iterating to the end of _monstersQueue implies that all monsters are defeated
+        public bool IsGameOver() 
+        {
+            return !HeroesSide.CheckIsAlive() || _monstersQueue.Count == 0;
+        }
+        
 
     }
 
@@ -231,7 +271,7 @@ namespace FinalBattle
             CurrentPartyTurn = PartySide.Heroes;
 
             //TODO: Possibly utilize an Event for death state here.
-            while (!IsGameOver())
+            while (!IsRoundOver())
             {
                 ConsoleOutput.OutputCurrentSide(this);
 
@@ -270,23 +310,26 @@ namespace FinalBattle
                     Thread.Sleep(2000);
 
 
-                    if (IsGameOver()) break;
+                    if (IsRoundOver()) break;
              
                 }
 
                 //Prematurely ends round if an endgame state is reached (party death of either side)
-                if (IsGameOver()) break;
+                if (IsRoundOver()) break;
 
 
                 ToggleSideTurn(CurrentPartyTurn);
                 
 
-
+                //TODO: 11/12 Add logic for determining party death state PRIOR to starting another BattleRound instance. Easiest solution could be to only instantiate a BattleRound / call BeginRound  within a Game instance when both parties are alive.
             }
+
+            
 
         }
 
-        public bool IsGameOver() 
+
+        public bool IsRoundOver()
         {
             return !_game.HeroesSide.CheckIsAlive() || !_game.MonstersSide.CheckIsAlive();
         }
