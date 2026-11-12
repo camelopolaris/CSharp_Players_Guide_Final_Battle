@@ -121,6 +121,20 @@ namespace FinalBattle
             
             Name = ConsoleOutput.PromptUser("Enter a name for the True Programmer: ");
 
+            Actions.Add(
+                new StandardAttack(
+                "DEBUG / TEST",
+                (battle, target) =>
+            {
+                int damageValue = 9999999;
+                target.TakeDamage(damageValue);
+
+                return new StandardAttack.AttackData(damageValue);
+            }
+
+
+                ));
+
         }
 
 
@@ -150,14 +164,16 @@ namespace FinalBattle
         //A Party is still considered alive if at least one member is still alive
         public bool CheckIsAlive() 
         {
+            /*
             int numberAlive =
                  (
                  from m in Members
                  where m.IsAlive
                  select m
                  ).Count();
+            */
 
-            return numberAlive > 0;
+            return Members.Count != 0;
         }
     }
 
@@ -187,6 +203,8 @@ namespace FinalBattle
             BattleRound firstBattle = new BattleRound(this);
             firstBattle.BeginRound();
 
+            
+
             ConsoleOutput.OutputGameOutcome(HeroesSide, MonstersSide);
         }
 
@@ -213,10 +231,9 @@ namespace FinalBattle
             CurrentPartyTurn = PartySide.Heroes;
 
             //TODO: Possibly utilize an Event for death state here.
-            while (_game.HeroesSide.CheckIsAlive() && _game.MonstersSide.CheckIsAlive())
+            while (!IsGameOver())
             {
-                //TODO: TEMPORARY CW
-                Console.WriteLine($"Current Side: {_currentParty.Side}");
+                ConsoleOutput.OutputCurrentSide(this);
 
                 //TODO: Consider moving depending on round logic. The same goes with the character actions seen below.
                 foreach (Character character in _currentParty.Members)
@@ -253,10 +270,12 @@ namespace FinalBattle
                     Thread.Sleep(2000);
 
 
-                    if (!_game.HeroesSide.CheckIsAlive() || !_game.MonstersSide.CheckIsAlive()) break;
+                    if (IsGameOver()) break;
              
                 }
 
+                //Prematurely ends round if an endgame state is reached (party death of either side)
+                if (IsGameOver()) break;
 
 
                 ToggleSideTurn(CurrentPartyTurn);
@@ -265,6 +284,11 @@ namespace FinalBattle
 
             }
 
+        }
+
+        public bool IsGameOver() 
+        {
+            return !_game.HeroesSide.CheckIsAlive() || !_game.MonstersSide.CheckIsAlive();
         }
 
         //Switches the party that has its turn. Used at the end of each party turn cycle.
@@ -372,8 +396,12 @@ namespace FinalBattle
             //It is legal to remove the opposing side's party member when they die since the party executing the attack is the only one being iterated through at this point.
             //Caveat is that any other scenario would require a different approach (e.g. if a Character has an attack that hurts themselves too)
 
-            if (!target.IsAlive) battle.GetOpposingSide().Members.Remove(target);
-            ConsoleOutput.OutputCharacterDeath(target);
+            if (!target.IsAlive) 
+            {
+                battle.GetOpposingSide().Members.Remove(target);
+                ConsoleOutput.OutputCharacterDeath(target);
+            } 
+            
         }
 
         [type: Obsolete("_attack in the StandardAttack class represents a suppliable Action<BattleRound, Character> type.")]

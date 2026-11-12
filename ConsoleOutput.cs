@@ -3,9 +3,18 @@
     public static class ConsoleOutput 
     {
         #region TURN / GAME LOGIC RELATED
+
+        public static void OutputCurrentSide(BattleRound battle) 
+        {
+            ConsoleColor color = battle._currentParty.Side == PartySide.Heroes ? ConsoleColor.Cyan : ConsoleColor.DarkMagenta;
+            WriteColorLine(color, $"Current Side: {battle._currentParty.Side}");
+            
+        }
         public static void OutputWhoseTurn(Character character) 
         {
-            Console.WriteLine($"It is {character.Name}'s turn...\n");
+
+            WriteColorLine(ConsoleColor.Yellow, $"It is {character.Name}'s turn...\n");
+           
         }
 
 
@@ -34,15 +43,16 @@
             if (heroes.Side != PartySide.Heroes) throw new ArgumentException($"Parameter \"heroes\" Side property was not of expected type {PartySide.Heroes}");
             if (monsters.Side != PartySide.Monsters) throw new ArgumentException($"Parameter \"monsters\" Side property was not of expected type {PartySide.Monsters}");
 
-            if(heroes.CheckIsAlive() && !monsters.CheckIsAlive()) Console.WriteLine("The heroes have won!");
-            else if (monsters.CheckIsAlive() && !heroes.CheckIsAlive()) Console.WriteLine("The Uncoded One's forces have prevailed...");
+            if (heroes.CheckIsAlive() && !monsters.CheckIsAlive()) WriteColorLine(ConsoleColor.Cyan, "The heroes have won!");
+            else if (monsters.CheckIsAlive() && !heroes.CheckIsAlive()) WriteColorLine(ConsoleColor.DarkMagenta, "The Uncoded One's forces have prevailed");
         }
         #endregion
 
         #region ATTACK TURNS
         public static void OutputAttack(Character attacker, IGameAction attack, Character recipient) 
         {
-            Console.WriteLine($"{attacker.Name} used {attack.Name} on {recipient.Name}.");
+            WriteColorLine(ConsoleColor.Yellow, $"{attacker.Name} used {attack.Name} on {recipient.Name}.");
+           
         }
 
         //TODO: Consider adding params keyword 
@@ -51,13 +61,32 @@
         //The damage number parameter exists so that the actual damage value (e.g. after resistances) is accurately displayed.
         public static void OutputAttackDamageOutcome(StandardAttack attack, Character target, int damage) 
         {
-            Console.WriteLine($"{attack.Name} dealt {damage} damage to {target.Name}.");
-            Console.WriteLine($"{target.Name} is now at {target.HP}/{target.MaxHP}.");
+
+            WriteColorLine(ConsoleColor.Blue, $"{attack.Name} dealt {damage} damage to {target.Name}.");
+          
+
+            //TODO: TEMPORARY CW    
+            Console.WriteLine(target.HP / (double)target.MaxHP);
+
+            //Returned color varies on target's health
+            ConsoleColor color = (target.HP / (double)target.MaxHP) switch
+            {
+                >= 0.75 and <= 1 => ConsoleColor.Green,
+                >= 0.25          => ConsoleColor.DarkYellow,
+                > 0              => ConsoleColor.Red,
+                  0              => ConsoleColor.DarkRed,
+            };
+
+
+            WriteColorLine(color, $"{target.Name} is now at {target.HP}/{target.MaxHP}.");
+           
         }
 
         public static void OutputCharacterDeath(Character character) 
         {
-            Console.WriteLine($"{character.Name} has been defeated!");
+
+            WriteColorLine(ConsoleColor.Blue, $"{character.Name} has been defeated!");
+
         }
 
        
@@ -104,10 +133,17 @@
           
         }
 
-        
 
+        public static void WriteColorLine(ConsoleColor color, string output)
+        {
+            Console.ForegroundColor = color;
+            Console.WriteLine(output);
+            Console.ResetColor();
+        }
 
     }
     #endregion
+
+   
 
 }
