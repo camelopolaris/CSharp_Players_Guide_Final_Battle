@@ -1,18 +1,47 @@
 ﻿
 using FinalBattle;
-using System.Runtime.CompilerServices;
-using System.Xml.Linq;
 
 
-List<Character> heroes = new List<Character>();
-heroes.Add(new Skeleton());
-heroes.Add(new TrueProgrammer());
 
-List<Character> monsters = new List<Character>();
 
-monsters.Add(new Skeleton());
 
-Game testGame = new Game(heroes, monsters, new HumanPlayer(), new ComputerPlayer());
+
+
+Player player1 = new HumanPlayer();
+Player player2 = new ComputerPlayer();
+
+Party heroes = new Party(new List<Character>()
+{
+    new Skeleton(),
+    new TrueProgrammer(),
+
+},
+    PartySide.Heroes,
+    player1
+);
+
+Party initialMonsters = new Party(
+    new List<Character>()
+    { 
+    new Skeleton(),
+    },
+    PartySide.Monsters,
+    player2
+
+);
+
+Game testGame = new Game(heroes, initialMonsters, player1, player2);
+
+testGame.AddToMonsterQueue(
+    new Party(
+                new List<Character>() 
+                { 
+                  new Skeleton(),
+                  new Skeleton(),
+                },
+                PartySide.Monsters,
+                player2
+                ));
 
 testGame.Run();
 
@@ -30,8 +59,7 @@ namespace FinalBattle
         public int MaxHP { get; protected set; }
 
         //TODO: PerformAction will be loaded with the character's current action depending on which one was chosen by the player (either human or computer)
-        //TODO: An Actions property (List<class that derives from an interface>) may be necessary for selecting a given action and displaying all actions that the current character has.
-        //Actions that derive from the IGameAction interface can be instantiated inside their given character classes, then placed in the character's Actions property.
+    
 
         [Obsolete]
         public Action<BattleRound>? PerformAction { get; set; }
@@ -72,7 +100,7 @@ namespace FinalBattle
         }
 
 }
-
+   
     public class Skeleton : Character
     {
         //The base Chararcter constructor automatically gives every Character a DoNothing action.
@@ -143,7 +171,6 @@ namespace FinalBattle
     }
     #endregion 
 
-    //TODO: Consider removing a party member from the Members collection when they die. THis makes it so that their IsAlive property doesn't have to be checked long after they are no longer in battle.
     public class Party 
     {
     
@@ -176,6 +203,26 @@ namespace FinalBattle
 
             return Members.Count != 0;
         }
+
+        public override string ToString()
+        {
+
+            IEnumerator<Character> iterator = Members.GetEnumerator(); 
+            string result = "";
+
+            while (iterator.MoveNext()) 
+            {
+                Character member = iterator.Current;
+
+                if (Members.IndexOf(member) == Members.Count - 1) result += member.Name;
+                else result += $"{member.Name}, ";
+               
+            }
+
+            return result;
+
+            
+        }
     }
 
     public enum PartySide 
@@ -194,25 +241,17 @@ namespace FinalBattle
         public Party HeroesSide { get; init; }
 
         //Null until constructor runs; represents the initial monster party, then is reassigned with monster parties after the first BattleRound is succeeded by heroes. 
+        //Lives in the Game Class since both this and HeroesSide are evaluated to determine the result of an entire game once an endgame state is reached (heroes die once or _monsterQueue has been iterated through)
         public Party? MonstersSide { get; private set; }
 
         //TODO: Consider altering Party instantiation depending on initialization logic upon starting a new game or battle round. The current implementation will likely work, though it could be necessary to have the constructor parameters be Party classes instead.
         //TODO: Ask for the type of player to instantiate each party with.
-        public Game(List<Character> heroes, List<Character> monsters, Player player1, Player player2 ) 
+        public Game(Party heroes, Party initialMonsters, Player player1, Player player2 ) 
         {
-            HeroesSide = new Party(heroes, PartySide.Heroes, player1);
+            HeroesSide = heroes;
 
-          
-            //TODO: 11/12
-            _monstersQueue.Add(new Party(monsters, PartySide.Monsters, player2));
 
-            _monstersQueue.Add(new Party(
-                new List<Character>() { 
-                    new Skeleton(),
-                    new Skeleton(),
-                }, 
-                PartySide.Monsters, 
-                player2));
+            _monstersQueue.Add(initialMonsters);
         }
         public void Run()
         {
@@ -226,15 +265,8 @@ namespace FinalBattle
                     battle.BeginRound();
                 }
                 else break;
+
             }
-
-          
-
-
-            //TODO: Add consecutive BattleRound battles here. They should only instantiate / invoke BeginRound when both parties are alive.
-            
-
-            
 
             ConsoleOutput.OutputGameOutcome(HeroesSide, MonstersSide);
         }
@@ -245,6 +277,15 @@ namespace FinalBattle
         public bool IsGameOver() 
         {
             return !HeroesSide.CheckIsAlive() || _monstersQueue.Count == 0;
+        }
+
+        public void AddToMonsterQueue(Party party) 
+        {
+            if (party.Side != PartySide.Monsters) throw new ArgumentException("Parties added to _monsterQueue must have a Side of type PartySide.Monsters");
+            else if(party.Members.Count == 0) throw new ArgumentException("Parties added to _monsterQueue must have at least one member");
+
+            _monstersQueue.Add(party);
+        
         }
         
 
@@ -269,6 +310,9 @@ namespace FinalBattle
         {
             _currentParty = _game.HeroesSide;
             CurrentPartyTurn = PartySide.Heroes;
+
+
+            ConsoleOutput.WriteColorLine(ConsoleColor.DarkMagenta, $"Enemy party members: {_game.MonstersSide.ToString()}\n");
 
             //TODO: Possibly utilize an Event for death state here.
             while (!IsRoundOver())
@@ -306,7 +350,6 @@ namespace FinalBattle
 
                     Console.WriteLine();
 
-                    //TODO: REMOVE SLEEP
                     Thread.Sleep(2000);
 
 

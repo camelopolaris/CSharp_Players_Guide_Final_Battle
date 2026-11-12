@@ -55,9 +55,8 @@
            
         }
 
-        //TODO: Consider adding params keyword 
+        //TODO: Consider using AttackData instead
 
-        //TODO: 11/10 StandardAttack could serve as a base class for specialized attacks, weapons, etc. This also ensures that the specified attack is actual an attack action type.
         //The damage number parameter exists so that the actual damage value (e.g. after resistances) is accurately displayed.
         public static void OutputAttackDamageOutcome(StandardAttack attack, Character target, int damage) 
         {
@@ -65,8 +64,6 @@
             WriteColorLine(ConsoleColor.Blue, $"{attack.Name} dealt {damage} damage to {target.Name}.");
           
 
-            //TODO: TEMPORARY CW    
-            Console.WriteLine(target.HP / (double)target.MaxHP);
 
             //Returned color varies on target's health
             ConsoleColor color = (target.HP / (double)target.MaxHP) switch
