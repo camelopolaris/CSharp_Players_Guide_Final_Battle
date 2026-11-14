@@ -57,6 +57,16 @@ public class Character
         //When the event is triggered, break the BattleRound loop and exit.
     }
 
+
+    //TODO: Change HP set accessor to just return Math.Clamp(value, 0, MaxHP) because TakeDamage and Heal are redundant. Otherwise, potentially make a method that accepts an Action delegate type. This opens up the possibility  of doing things such as altering MaxHP
+    public void Heal(int amount) 
+    {
+
+        int result = HP + amount;
+        HP = Math.Clamp(result, 0, MaxHP);
+
+    }
+
     /*
     public override bool Equals(object? obj)
     {

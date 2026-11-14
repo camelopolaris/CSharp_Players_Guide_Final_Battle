@@ -160,6 +160,8 @@ namespace FinalBattle
 
     }
 
+    #region ACTIONS
+
     //TODO: CharacterTurn could be a base class for actions such as attacks.
     public class DoNothing : IGameAction 
     {
@@ -289,6 +291,27 @@ namespace FinalBattle
         }
     }
 
+    #endregion  
+
+    public abstract class InventoryItem 
+    {
+
+        public abstract void Use(Character target);
+    }
+
+    public class HealthPotion : InventoryItem 
+    {
+        public int HealAmount { get;  }
+        public HealthPotion(int healAmount) 
+        {
+            HealAmount = healAmount;
+        }
+        public override void Use(Character target) 
+        {
+
+            target.Heal(HealAmount);
+        }
+    }
     #region PLAYERS
     public abstract class Player 
     {

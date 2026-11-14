@@ -9,6 +9,8 @@
         public List<Character> Members { get; }
 
 
+
+
         //TODO: Consider consequences of passing collection since it is a reference type by nature
         public Party(List<Character> members, PartySide side, Player player)
 
