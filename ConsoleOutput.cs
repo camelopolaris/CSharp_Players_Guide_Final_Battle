@@ -4,6 +4,22 @@
     {
         #region TURN / GAME LOGIC RELATED
 
+        public static void OutputBattleStatus(BattleRound battle, Character currentTurnCharacter) 
+        {
+            Console.WriteLine("============================================= BATTLE ============================================");
+            foreach (Character character in battle._currentParty.Members) 
+            {
+                if (character == currentTurnCharacter) ConsoleOutput.WriteColorLine(ConsoleColor.Yellow, $"{character.Name}                ( {character.HP}/{character.MaxHP} )");
+                else Console.WriteLine($"{character.Name}                ( {character.HP}/{character.MaxHP} )");
+            }
+            
+            Console.WriteLine("--------------------------------------------- VERSUS --------------------------------------------");
+            foreach (Character character in battle.GetOpposingSide().Members) 
+            {
+                Console.WriteLine($"                                                                                 {character.Name} ( {character.HP}/{character.MaxHP} )");
+            }
+            Console.WriteLine("=================================================================================================");
+        }
         public static void OutputCurrentSide(BattleRound battle) 
         {
             ConsoleColor color = battle._currentParty.Side == PartySide.Heroes ? ConsoleColor.Cyan : ConsoleColor.DarkMagenta;
@@ -65,7 +81,7 @@
           
 
 
-            //Returned color varies on target's health
+            //Color ranges from Green <-> DarkRed for Max <-> Zero HP respectively, where HP / MaxHP is the fractional health remaining
             ConsoleColor color = (target.HP / (double)target.MaxHP) switch
             {
                 >= 0.75 and <= 1 => ConsoleColor.Green,
@@ -90,6 +106,7 @@
         #endregion
 
         #region PARTY / CHARACTER INFORMATION
+        //Used for HumanPlayer instances that will manually select a target. May also be used for selecting a member on the same party, though an override may be more necessary to exclude the character that is executing the turn.
         public static void OutputMembers(Party party) 
         {
             int placeValue = 1;
@@ -123,7 +140,7 @@
 
             else
             {
-                Console.WriteLine("Please enter a valid integer");
+                ConsoleOutput.WriteColorLine(ConsoleColor.Red, "Please enter a valid integer");
                 return PromptUserInt(prompt);
             }
               

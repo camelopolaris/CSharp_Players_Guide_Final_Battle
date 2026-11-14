@@ -1,29 +1,54 @@
 ﻿
 using FinalBattle;
+using System.Reflection.Metadata.Ecma335;
+
+Player? player1 = null;
+Player? player2 = null;
+
+
+while (player1 is null && player2 is null) {
+    int chosenGamemode = ConsoleOutput.PromptUserInt("\nGamemodes:\n1 - Player versus CPU\n2 - CPU versus CPU\n3 - Player versus Player\n\nChoose a gamemode: ");
+
+    switch (chosenGamemode)
+    {
+        case 1:
+            player1 = new HumanPlayer();
+            player2 = new ComputerPlayer();
+            break;
+        case 2:
+            player1 = new ComputerPlayer();
+            player2 = new ComputerPlayer();
+            break;
+        case 3:
+            player1 = new HumanPlayer();
+            player2 = new HumanPlayer();
+            break;
+        default:
+            ConsoleOutput.WriteColorLine(ConsoleColor.Red, "Please enter a valid gamemode number");
+            continue;
+
+    }
+}
 
 
 
 
-
-
-
-Player player1 = new HumanPlayer();
-Player player2 = new ComputerPlayer();
 
 Party heroes = new Party(new List<Character>()
 {
-    new Skeleton(),
-    new TrueProgrammer(),
+    new Skeleton(5),
+    new TrueProgrammer(25),
 
 },
     PartySide.Heroes,
     player1
+
 );
 
 Party initialMonsters = new Party(
     new List<Character>()
     { 
-    new Skeleton(),
+    new Skeleton(5),
     },
     PartySide.Monsters,
     player2
@@ -36,27 +61,50 @@ testGame.AddToMonsterQueue(
     new Party(
                 new List<Character>() 
                 { 
-                  new Skeleton(),
-                  new Skeleton(),
+                  new Skeleton(5),
+                  new Skeleton(5),
                 },
                 PartySide.Monsters,
                 player2
                 ));
+
+testGame.AddToMonsterQueue(
+
+    new Party(
+
+        new List<Character>() { new UncodedOne(15)},
+        PartySide.Monsters,
+        player2
+        )
+    );
 
 testGame.Run();
 
 namespace FinalBattle 
 {
 
+    #region CHARACTER IDEAS
+
+    /*
+     * DoubleAgent: They're just in it for the money. Randomly switches which party they belong to every few turns, but its attacks are weaker if they are on the Monsters party.
+     * CouncilOfFreach: Standard attack fills an array with random integer values between 0 and 10 non-inclusive; the total number of values randomly ranges from 3-6 inclusive. The final damage value is the average of these values rounded down to the nearest integer.
+     * Simula: Standard action allows players to construct a soup consisting of different ingredients, then adds that soup to the party's inventory. Each ingredient adds things such as attack increases, heals, etc. Second action is a LADEL SWING, which flings boiling soup and deals 1 damage, then 1 damage for 2 turns. Low MaxHP.
+     * Awat: Standard attack DESYNCHRONIZE does nothing at first, but creates a new Thread which randomly damages the target at the start of ANY character's turn for {x} damage for up to 3 turns (only counted when damage is dealt). However, it lowers Awat's MaxHp each time it is unsuccessful and halves the effectiveness of heals until it is done running. Cannot be used again while a DESYNCHRONIZE instance is already active. Medium-high MaxHP.
+     * 
+     * */
+    #endregion
 
     #region CHARACTERS
-    public  class Character
+    public class Character
     {
         //TODO: Initialize HP for each Character-based class
         //The protected accessibility modifier lets descendants of Character modify their own HP values directly.
         public int HP { get;  protected set; }
 
         public int MaxHP { get; protected set; }
+
+        //Differentiates characters of the same name (primarily used for determining which character has the current turn when outputting the battle status)
+        //public Guid Identifier { get; }
 
         //TODO: PerformAction will be loaded with the character's current action depending on which one was chosen by the player (either human or computer)
     
@@ -74,8 +122,12 @@ namespace FinalBattle
         }
 
 
-        public Character() 
+        public Character(int health) 
         {
+            MaxHP = health;
+            HP = MaxHP;
+
+            //Identifier = Guid.NewGuid();
 
             Actions.Add(new DoNothing());
         }
@@ -99,17 +151,26 @@ namespace FinalBattle
             //When the event is triggered, break the BattleRound loop and exit.
         }
 
+        /*
+        public override bool Equals(object? obj)
+        {
+            Character? comparedCharacter = obj as Character;
+
+            return comparedCharacter?.Identifier == Identifier;
+        }
+        */
+
+        
+
 }
    
     public class Skeleton : Character
     {
         //The base Chararcter constructor automatically gives every Character a DoNothing action.
-        public Skeleton() : base()
+        public Skeleton(int health) : base(health)
         {
             Name = "SKELETON";
 
-            MaxHP = 5;
-            HP = MaxHP;
 
             Actions.Add(new StandardAttack(
                 "BONE CRUNCH", 
@@ -143,10 +204,8 @@ namespace FinalBattle
     //Represents the actual player
     public class TrueProgrammer : Character 
     {
-        public TrueProgrammer() 
+        public TrueProgrammer(int health) : base(health)
         {
-            MaxHP = 25;
-            HP = MaxHP;
             
             Name = ConsoleOutput.PromptUser("Enter a name for the True Programmer: ");
 
@@ -169,67 +228,39 @@ namespace FinalBattle
 
         
     }
+
+    public class UncodedOne : Character 
+    {
+
+        public UncodedOne(int health) : base(health)
+        {
+            Name = "UNCODED ONE";
+
+
+            Actions.Add(
+                
+                new StandardAttack(
+                    
+                    "UNRAVEL",
+                    (battle, target) =>
+                    {
+                        Random random = new Random();
+                        int damageValue = random.Next(3);
+
+                        target.TakeDamage(damageValue);
+
+                        return new StandardAttack.AttackData(damageValue);
+                    }
+                    )
+                
+                );
+        
+        }
+    }
+
     #endregion 
 
-    public class Party 
-    {
     
-        //Represents the type of Player that will dictate the party's actions.
-        public Player Player { get; }
-        public PartySide Side { get; init; }
-        public List<Character> Members { get; }
-
-
-        //TODO: Consider consequences of passing collection since it is a reference type by nature
-        public Party(List<Character> members, PartySide side, Player player)
-
-        {
-            Members = members;
-            Side = side;
-            Player = player;
-        }
-
-        //A Party is still considered alive if at least one member is still alive
-        public bool CheckIsAlive() 
-        {
-            /*
-            int numberAlive =
-                 (
-                 from m in Members
-                 where m.IsAlive
-                 select m
-                 ).Count();
-            */
-
-            return Members.Count != 0;
-        }
-
-        public override string ToString()
-        {
-
-            IEnumerator<Character> iterator = Members.GetEnumerator(); 
-            string result = "";
-
-            while (iterator.MoveNext()) 
-            {
-                Character member = iterator.Current;
-
-                if (Members.IndexOf(member) == Members.Count - 1) result += member.Name;
-                else result += $"{member.Name}, ";
-               
-            }
-
-            return result;
-
-            
-        }
-    }
-
-    public enum PartySide 
-    {
-        Heroes,
-        Monsters
-    }
 
     public class Game
     {
@@ -279,6 +310,8 @@ namespace FinalBattle
             return !HeroesSide.CheckIsAlive() || _monstersQueue.Count == 0;
         }
 
+
+        //Potential usage other than obviously adding new monster parties to iterate through before each round is to have a MonsterSide Character call in another party (e.g. add an entire round)
         public void AddToMonsterQueue(Party party) 
         {
             if (party.Side != PartySide.Monsters) throw new ArgumentException("Parties added to _monsterQueue must have a Side of type PartySide.Monsters");
@@ -322,13 +355,12 @@ namespace FinalBattle
                 //TODO: Consider moving depending on round logic. The same goes with the character actions seen below.
                 foreach (Character character in _currentParty.Members)
                 {
+                    ConsoleOutput.OutputBattleStatus(this, character);
                     ConsoleOutput.OutputWhoseTurn(character);
 
-                    //TODO: Only output if current player is a HumanPlayer
                     if(_currentParty.Player is HumanPlayer) ConsoleOutput.OutputAvailableActions(character);
 
-                    //TODO: Could just call Execute() instead polymorphically directly
-                    //TODO: The PerformAction property could be used for something such as cancelling using an item (e.g. change action before actually executing it).
+                    //TODO: The PerformAction property could be used for something such as cancelling using an item (e.g. change action before actually invoking Execute).
 
                     IGameAction? chosenAction;
 
