@@ -109,6 +109,8 @@
             if (CurrentPartyTurn == PartySide.Heroes) return _game.MonstersSide;
             else return _game.HeroesSide;
         }
+
+        
         
 
     }

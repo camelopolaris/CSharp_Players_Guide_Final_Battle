@@ -78,23 +78,27 @@
         {
 
             WriteColorLine(ConsoleColor.Blue, $"{attack.Name} dealt {damage} damage to {target.Name}.");
-          
 
 
+            OutputCharacterHealthStatus(target);
+            
+           
+        }
+
+        public static void OutputCharacterHealthStatus(Character target) 
+        {
             //Color ranges from Green <-> DarkRed for Max <-> Zero HP respectively, where HP / MaxHP is the fractional health remaining
             ConsoleColor color = (target.HP / (double)target.MaxHP) switch
             {
                 >= 0.75 and <= 1 => ConsoleColor.Green,
-                >= 0.25          => ConsoleColor.DarkYellow,
-                > 0              => ConsoleColor.Red,
-                  0              => ConsoleColor.DarkRed,
+                >= 0.25 => ConsoleColor.DarkYellow,
+                > 0 => ConsoleColor.Red,
+                0 => ConsoleColor.DarkRed,
             };
 
 
             WriteColorLine(color, $"{target.Name} is now at {target.HP}/{target.MaxHP}.");
-           
         }
-
         public static void OutputCharacterDeath(Character character) 
         {
 
@@ -118,6 +122,27 @@
             }
 
             Console.WriteLine();
+        }
+
+       
+        public static void OutputItems(Party party) 
+        {
+
+            if (party.Inventory.Count > 0) 
+            {
+                int placeValue = 1;
+
+                foreach (InventoryItem item in party.Inventory)
+                {
+
+                    Console.Write(placeValue - 1 != party.Inventory.Count - 1 ? $"{placeValue} - {item.Name}, " : $"{placeValue} - {item.Name}");
+
+                    placeValue++;
+                }
+
+                Console.WriteLine();
+            }
+            
         }
         #endregion
 

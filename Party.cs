@@ -9,7 +9,7 @@
         public List<Character> Members { get; }
 
 
-
+        public List<InventoryItem> Inventory { get; }
 
         //TODO: Consider consequences of passing collection since it is a reference type by nature
         public Party(List<Character> members, PartySide side, Player player)
@@ -18,6 +18,17 @@
             Members = members;
             Side = side;
             Player = player;
+            Inventory = new List<InventoryItem>();
+
+            if (side == PartySide.Heroes) 
+            {
+
+                for (int i = 0; i < 3; i++) 
+                {
+                    Inventory.Add(new HealthPotion(10));
+                }
+            }
+            else if(side == PartySide.Monsters) Inventory.Add(new HealthPotion(10));
         }
 
         //A Party is still considered alive if at least one member is still alive

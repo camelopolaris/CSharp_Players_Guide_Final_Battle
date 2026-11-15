@@ -36,6 +36,7 @@ public class Character
         //Identifier = Guid.NewGuid();
 
         Actions.Add(new DoNothing());
+        Actions.Add(new UseItem());
     }
 
     [Obsolete]
@@ -64,6 +65,9 @@ public class Character
 
         int result = HP + amount;
         HP = Math.Clamp(result, 0, MaxHP);
+
+        ConsoleOutput.WriteColorLine(ConsoleColor.Green, $"{Name} healed {amount} HP.");
+        ConsoleOutput.OutputCharacterHealthStatus(this);
 
     }
 
